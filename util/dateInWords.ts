@@ -14,7 +14,7 @@ export function dateInWordsIncludeYear(date: any) {
 }
 
 export function dateInWordsTimeOnly(date:any){
-  const dateInWords = date.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true })
+  const dateInWords = date.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })
   return dateInWords
 
 }

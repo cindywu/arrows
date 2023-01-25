@@ -5,7 +5,32 @@ import { getShape, shapePrefix } from "./shape";
 import { getItem, itemPrefix } from "./item";
 import { getUser, userPrefix } from "./user";
 import { getThing, thingPrefix } from "./thing";
+import { getArrow, arrowPrefix } from "./arrow";
 import type { M } from "./mutators";
+
+export function useArrowIDs(reflect: Reflect<M>) {
+  return useSubscribe(
+    reflect,
+    async (tx) => {
+      const arrows = (await tx
+        .scan({ prefix: arrowPrefix})
+        .keys()
+        .toArray()) as string[];
+      return arrows.map((k) => k.substring(arrowPrefix.length));
+    },
+    []
+  );
+}
+
+export function useArrowByID(reflect: Reflect<M>, id: string) {
+  return useSubscribe(
+    reflect,
+    async (tx) => {
+      return await getArrow(tx, id);
+    },
+    null
+  );
+}
 
 export function useThingIDs(reflect: Reflect<M>) {
   return useSubscribe(
