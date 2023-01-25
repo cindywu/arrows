@@ -1,12 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useUserIDs, useThingIDs, useItemIDs, useThingByID } from '../datamodel/subscriptions'
+import { useThingIDs, useThingByID, useArrowIDs, useArrowByID } from '../datamodel/subscriptions'
 import { randomThing } from '../datamodel/thing'
+import { randomArrow } from '../datamodel/arrow'
 import { dateInWordsTimeOnly } from '../util/dateInWords'
+import Link from 'next/link'
 
 export default function Arrows({ reflect } : { reflect: any}) {
   const [selectedThing, setSelectedThing] = useState<string|null>(null)
+  const [showAuthors, setShowAuthors] = useState<boolean>(false)
 
   const thingIDs = useThingIDs(reflect)
+  const arrowIDs = useArrowIDs(reflect)
+
+  console.log({arrowIDs})
 
   function addThing(){
     const thing = randomThing()
@@ -16,21 +22,28 @@ export default function Arrows({ reflect } : { reflect: any}) {
   return (
     <div className={"relative h-screen"}>
       <div className={"flex h-screen z-0"}>
-        <Left/>
         {thingIDs &&
-          <Middle
-            thingIDs={thingIDs}
-            addThing={addThing}
-            handleSetSelectedThing={setSelectedThing}
-            reflect={reflect}
-          />
+          <>
+            <Left
+              count={thingIDs.length}
+            />
+            <Middle
+              thingIDs={thingIDs}
+              addThing={addThing}
+              handleSetSelectedThing={setSelectedThing}
+              reflect={reflect}
+              handleShowAuthors={showAuthors}
+              handleSetShowAuthors={setShowAuthors}
+            />
+          </>
+
         }
         <Right
           thing={selectedThing || null}
           reflect={reflect}
         />
       </div>
-      <Toasts/>
+      {/* <Toasts/> */}
     </div>
   )
 }
@@ -53,37 +66,44 @@ function Toasts(){
     </div>
   )
 }
-function Left(){
+function Left({count}: any){
   return (
-    <div className={"w-96 border-r-2 border-black bg-yellow-100"}>
+    <div className={`w-96 border-r-2 border-black h-screen`}>
       <div className={"p-8"}>
         <div className={"text-4xl"}>⤏</div>
-        <div>ciindy.wu@gmail.com</div>
+        <div className={"py-4"}>ciindy.wu@gmail.com</div>
+        <div>{count} things</div>
       </div>
+      <Link href="https://cindy-wu.com"><div className={"absolute p-8 bottom-0 text-4xl"}>☄</div></Link>
     </div>
   )
 }
 
-function Middle({thingIDs, addThing, handleSetSelectedThing, reflect}:any){
+function Middle({thingIDs, addThing, handleSetSelectedThing, reflect, handleShowAuthors, handleSetShowAuthors}:any){
   return (
     <div className={"w-full flex flex-col"}>
       <Nav
         addThing={addThing}
+        handleShowAuthors={handleShowAuthors}
+        handleSetShowAuthors={handleSetShowAuthors}
       />
       <Body
         thingIDs={thingIDs}
         handleSetSelectedThing={handleSetSelectedThing}
         reflect={reflect}
+        handleShowAuthors={handleShowAuthors}
       />
     </div>
   )
 }
 
-function Nav({addThing}: any){
+function Nav({addThing, handleShowAuthors, handleSetShowAuthors}: any){
   return(
-    <div className={"bg-blue-100 border-b-2 border-black h-16 p-4"}>
+    <div className={"border-b-2 border-black h-16 p-4"}>
       <div className={"flex h-full"}>
-        <div className={"w-full"}></div>
+        <div className={"w-full"}>
+          <div onClick={() => handleSetShowAuthors(!handleShowAuthors)}>{handleShowAuthors ? "hide authors" : "show authors"}</div>
+        </div>
         <div className={"flex flex-col justify-center"}>
           <AddButton
             addThing={addThing}
@@ -107,7 +127,7 @@ function AddButton({addThing}: any){
   )
 }
 
-function Body({thingIDs, handleSetSelectedThing, reflect}: any){
+function Body({thingIDs, handleSetSelectedThing, reflect, handleShowAuthors}: any){
   return (
     <div className={"overflow-auto"}>
       {thingIDs && thingIDs.map((thingID: any, index: any) =>
@@ -117,6 +137,7 @@ function Body({thingIDs, handleSetSelectedThing, reflect}: any){
           index={index}
           handleSetSelectedThing={handleSetSelectedThing}
           reflect={reflect}
+          handleShowAuthors={handleShowAuthors}
         />
       )}
     </div>
@@ -124,9 +145,8 @@ function Body({thingIDs, handleSetSelectedThing, reflect}: any){
 }
 
 function Right({ thing, reflect}: any){
-
   return (
-    <div className={"p-4 w-128 bg-green-100 border-l-2 border-black"}>
+    <div className={"p-4 w-128 border-l-2 border-black"}>
       {thing &&
         <ThingEdit
           thing={thing}
@@ -139,12 +159,22 @@ function Right({ thing, reflect}: any){
 }
 
 function ThingEdit({thing, name, reflect} : any) {
-  const nameRef = useRef<HTMLInputElement>()
+  const nameRef = useRef<HTMLTextAreaElement>()
+  const authorRef = useRef<HTMLInputElement>()
   const [x, setX] = useState<any>(name)
+  const [showAuthorForm, setShowAuthorForm] = useState<boolean>(false)
+
+  const [arrowIDs, setArrowIDs] = useState<string[]>([])
+
+  console.log({thing})
 
   useEffect(() => {
     setX(name)
   }, [name])
+
+  useEffect(() => {
+    setArrowIDs(thing.arrows)
+  }, [thing.arrows])
 
   function updateThingName(){
     let value = name
@@ -159,22 +189,100 @@ function ThingEdit({thing, name, reflect} : any) {
     reflect.mutate.updateThingName(data)
   }
 
+  function saveAuthor(){
+    // create a new thing
+    const authorThing : any = randomThing()
+    authorThing.thing.name = authorRef.current.value
+
+    // create a new arrow
+    const authorArrow : {id: string, arrow: {back: string, front: string, createdAt: string}}= randomArrow()
+
+    // update arrow with front and back
+    authorArrow.arrow.front = authorThing.id
+    authorArrow.arrow.back = thing.id
+
+    // update new thing with new arrow
+    authorThing.thing.arrows = [authorArrow.id, ...authorThing.thing.arrows]
+    authorThing.thing.type = "author"
+    // save everything
+    // save arrow
+    reflect.mutate.createArrow(authorArrow)
+    // create new thing
+    reflect.mutate.createThing(authorThing)
+    // add arrow to existing thing
+    reflect.mutate.updateThingAddArrow({id: thing.id, arrow: authorArrow.id})
+  }
+
   return (
     <div>
       <div className={"font-mono p-4 text-zinc-400"}>{thing.id}</div>
-      <input
-        className={"px-4 py-2 w-full outline-none bg-zinc-100 focus:bg-white"}
+      <textarea
+        className={"px-4 py-2 w-full outline-none bg-zinc-100 bg-white focus:bg-zinc-100"}
         ref={nameRef}
         placeholder={"name"}
         value={x}
         onChange={() => updateThingName()}
       />
+      <div className={"px-4 py-2"}>
+        <div className={"py-2"}>
+          {arrowIDs && arrowIDs.map((arrowID: any) => {
+            return (
+              <AuthorArrow
+                key={arrowID}
+                arrowID={arrowID}
+                reflect={reflect}
+              />
+            )
+          })}
+        </div>
+        {showAuthorForm ?
+          <>
+            <div className={"flex"}>
+            <input
+              className={"px-2 py-2 w-full outline-none bg-zinc-100 bg-white focus:bg-zinc-100"}
+              placeholder={"author name"}
+              ref={authorRef}
+            />
+            <div><button onClick={() => saveAuthor()}>save</button></div>
+            <div><button onClick={() => setShowAuthorForm(!showAuthorForm)}>&times;</button></div>
+            </div>
+          </>
+          :
+          <button className={"py-2"} onClick={() => setShowAuthorForm(!showAuthorForm)}>Add author</button>
+        }
+      </div>
+      <div
+        className={"px-4 py-2"}
+        onClick={() => reflect.mutate.deleteThing(thing.id)}
+      >Delete</div>
     </div>
   )
 }
 
+function AuthorArrow({reflect, arrowID}: {reflect: any, arrowID: string}){
+  const arrow = useArrowByID(reflect, arrowID)
+  return(
+    arrow &&
+      <>
+        <Author
+          reflect={reflect}
+          thingID={arrow.front}
+        />
+      </>
+  )
+}
 
-function Thing({thingID, index, handleSetSelectedThing, reflect}: any){
+function Author({reflect, thingID}: any) {
+  const thing = useThingByID(reflect, thingID)
+  return (
+    thing &&
+
+    <div>{thing.name}</div>
+  )
+}
+
+
+function Thing({thingID, index, handleSetSelectedThing, reflect, handleShowAuthors}: any){
   const [showDelete, setShowDelete] = useState(false)
 
   const thing = useThingByID(reflect, thingID)
@@ -182,6 +290,11 @@ function Thing({thingID, index, handleSetSelectedThing, reflect}: any){
   function passThingToParent(){
     handleSetSelectedThing({id: thingID, ...thing})
   }
+
+  if (!handleShowAuthors  && thing && thing.type === "author") {
+    return
+  }
+
   return (
     <div
       className={index%2 === 1 ? "bg-zinc-200 px-4 py-2" : "bg-white px-4 py-2"}
@@ -189,16 +302,14 @@ function Thing({thingID, index, handleSetSelectedThing, reflect}: any){
       onMouseEnter={() => setShowDelete(true)}
       onMouseLeave={() => setShowDelete(false)}
     >
-      <div className={"grid grid-cols-3"}>
-      <div>{thingID.slice(-6)}</div>
+      <div className={"flex "}>
+      <div className={"w-24"}>{thingID.slice(-6)}</div>
       {thing &&
         <>
-        <div>{thing.name}</div>
-        <div>{dateInWordsTimeOnly(new Date(thing.createdAt))}</div>
+          <div className={"w-full"}>{thing.name}</div>
+          <div className={"w-24"}>{dateInWordsTimeOnly(new Date(thing.createdAt))}</div>
         </>
       }
-
-      {/* {showDelete ? <button className={"px-2"}>delete</button> : <button></button>} */}
       </div>
     </div>
   )

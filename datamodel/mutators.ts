@@ -29,7 +29,13 @@ import {
   putThing,
   deleteThing,
   updateThingName,
+  updateThingAddArrow,
 } from "./thing";
+
+import {
+  putArrow,
+  deleteArrow,
+} from "./arrow";
 
 export type M = typeof serverMutators;
 
@@ -54,6 +60,9 @@ export const serverMutators = {
   createThing: putThing,
   deleteThing,
   updateThingName,
+  createArrow: putArrow,
+  deleteArrow,
+  updateThingAddArrow,
   nop: async (_: WriteTransaction) => {},
 };
 
