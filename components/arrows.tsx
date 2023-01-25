@@ -1,23 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useUserIDs, useThingIDs, useItemIDs, useThingByID } from '../datamodel/subscriptions'
 import { randomThing } from '../datamodel/thing'
 import { dateInWordsTimeOnly } from '../util/dateInWords'
 
 export default function Arrows({ reflect } : { reflect: any}) {
-  const [things, setThings] = useState(["reference 1", "reference 2", "reference 3"])
   const [selectedThing, setSelectedThing] = useState<string|null>(null)
 
-  const userIDs = useUserIDs(reflect)
   const thingIDs = useThingIDs(reflect)
-  const itemIDs = useItemIDs(reflect)
-
-  console.log({userIDs}, {thingIDs}, {itemIDs})
-
-  // OLD
-  // function addThing(){
-  //   let thing = "reference " + (things.length + 1)
-  //   setThings([...things, thing])
-  // }
 
   function addThing(){
     const thing = randomThing()
@@ -25,8 +14,8 @@ export default function Arrows({ reflect } : { reflect: any}) {
   }
 
   return (
-    <div className={"h-screen"}>
-      <div className={"flex h-screen"}>
+    <div className={"relative h-screen"}>
+      <div className={"flex h-screen z-0"}>
         <Left/>
         {thingIDs &&
           <Middle
@@ -37,13 +26,33 @@ export default function Arrows({ reflect } : { reflect: any}) {
           />
         }
         <Right
-          thing={selectedThing}
+          thing={selectedThing || null}
+          reflect={reflect}
         />
       </div>
+      <Toasts/>
     </div>
   )
 }
 
+
+function Toasts(){
+  return (
+    <div className={`
+      absolute bottom-0 left-0
+      flex justify-around
+      w-80 h-16
+      bg-zinc-100
+      p-4
+      border-2 border-black
+      m-2
+    `}>
+      <div>✓</div>
+      <div>Thing added.</div>
+      <div>&times;</div>
+    </div>
+  )
+}
 function Left(){
   return (
     <div className={"w-96 border-r-2 border-black bg-yellow-100"}>
@@ -114,21 +123,69 @@ function Body({thingIDs, handleSetSelectedThing, reflect}: any){
   )
 }
 
-function Right({ thing }: any){
+function Right({ thing, reflect}: any){
+
   return (
-    <div className={"p-4 w-128 bg-green-100 border-l-2 border-black"}>{thing && thing}</div>
+    <div className={"p-4 w-128 bg-green-100 border-l-2 border-black"}>
+      {thing &&
+        <ThingEdit
+          thing={thing}
+          name={thing.name}
+          reflect={reflect}
+        />
+      }
+    </div>
   )
 }
+
+function ThingEdit({thing, name, reflect} : any) {
+  const nameRef = useRef<HTMLInputElement>()
+  const [x, setX] = useState<any>(name)
+
+  useEffect(() => {
+    setX(name)
+  }, [name])
+
+  function updateThingName(){
+    let value = name
+    if (nameRef && nameRef.current && nameRef.current.value) {
+      value = nameRef.current.value
+    }
+    const data = {
+      id: thing.id,
+      name: value
+    }
+    setX(value)
+    reflect.mutate.updateThingName(data)
+  }
+
+  return (
+    <div>
+      <div className={"font-mono p-4 text-zinc-400"}>{thing.id}</div>
+      <input
+        className={"px-4 py-2 w-full outline-none bg-zinc-100 focus:bg-white"}
+        ref={nameRef}
+        placeholder={"name"}
+        value={x}
+        onChange={() => updateThingName()}
+      />
+    </div>
+  )
+}
+
 
 function Thing({thingID, index, handleSetSelectedThing, reflect}: any){
   const [showDelete, setShowDelete] = useState(false)
 
   const thing = useThingByID(reflect, thingID)
-  console.log({thing})
+
+  function passThingToParent(){
+    handleSetSelectedThing({id: thingID, ...thing})
+  }
   return (
     <div
       className={index%2 === 1 ? "bg-zinc-200 px-4 py-2" : "bg-white px-4 py-2"}
-      onClick={() => handleSetSelectedThing(thingID)}
+      onClick={() => passThingToParent()}
       onMouseEnter={() => setShowDelete(true)}
       onMouseLeave={() => setShowDelete(false)}
     >
