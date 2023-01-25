@@ -1,23 +1,41 @@
 import React, { useState } from 'react'
+import { useUserIDs, useThingIDs, useItemIDs, useThingByID } from '../datamodel/subscriptions'
+import { randomThing } from '../datamodel/thing'
+import { dateInWordsTimeOnly } from '../util/dateInWords'
 
-export default function Arrows() {
+export default function Arrows({ reflect } : { reflect: any}) {
   const [things, setThings] = useState(["reference 1", "reference 2", "reference 3"])
   const [selectedThing, setSelectedThing] = useState<string|null>(null)
 
+  const userIDs = useUserIDs(reflect)
+  const thingIDs = useThingIDs(reflect)
+  const itemIDs = useItemIDs(reflect)
+
+  console.log({userIDs}, {thingIDs}, {itemIDs})
+
+  // OLD
+  // function addThing(){
+  //   let thing = "reference " + (things.length + 1)
+  //   setThings([...things, thing])
+  // }
+
   function addThing(){
-    let thing = "reference " + (things.length + 1)
-    setThings([...things, thing])
+    const thing = randomThing()
+    reflect.mutate.createThing(thing)
   }
 
   return (
     <div className={"h-screen"}>
       <div className={"flex h-screen"}>
         <Left/>
-        <Middle
-          things={things}
-          addThing={addThing}
-          handleSetSelectedThing={setSelectedThing}
-        />
+        {thingIDs &&
+          <Middle
+            thingIDs={thingIDs}
+            addThing={addThing}
+            handleSetSelectedThing={setSelectedThing}
+            reflect={reflect}
+          />
+        }
         <Right
           thing={selectedThing}
         />
@@ -37,15 +55,16 @@ function Left(){
   )
 }
 
-function Middle({things, addThing, handleSetSelectedThing, handleSetThings}:any){
+function Middle({thingIDs, addThing, handleSetSelectedThing, reflect}:any){
   return (
     <div className={"w-full flex flex-col"}>
       <Nav
         addThing={addThing}
       />
       <Body
-        things={things}
+        thingIDs={thingIDs}
         handleSetSelectedThing={handleSetSelectedThing}
+        reflect={reflect}
       />
     </div>
   )
@@ -79,18 +98,16 @@ function AddButton({addThing}: any){
   )
 }
 
-function Body({things, handleSetSelectedThing}: any){
-  const reversedThings = things.slice().reverse()
-
-
+function Body({thingIDs, handleSetSelectedThing, reflect}: any){
   return (
     <div className={"overflow-auto"}>
-      {reversedThings && reversedThings.map((thing: any, index: any) =>
+      {thingIDs && thingIDs.map((thingID: any, index: any) =>
         <Thing
-          key={thing}
-          thing={thing}
+          key={thingID}
+          thingID={thingID}
           index={index}
           handleSetSelectedThing={handleSetSelectedThing}
+          reflect={reflect}
         />
       )}
     </div>
@@ -103,19 +120,29 @@ function Right({ thing }: any){
   )
 }
 
-function Thing({thing, index, handleSetSelectedThing}: any){
+function Thing({thingID, index, handleSetSelectedThing, reflect}: any){
   const [showDelete, setShowDelete] = useState(false)
 
+  const thing = useThingByID(reflect, thingID)
+  console.log({thing})
   return (
     <div
-      key={thing}
       className={index%2 === 1 ? "bg-zinc-200 px-4 py-2" : "bg-white px-4 py-2"}
-      onClick={() => handleSetSelectedThing(thing)}
+      onClick={() => handleSetSelectedThing(thingID)}
       onMouseEnter={() => setShowDelete(true)}
       onMouseLeave={() => setShowDelete(false)}
     >
-      <span>{thing}</span>
-      {showDelete && <button className={"px-2"}>delete</button>}
+      <div className={"grid grid-cols-3"}>
+      <div>{thingID.slice(-6)}</div>
+      {thing &&
+        <>
+        <div>{thing.name}</div>
+        <div>{dateInWordsTimeOnly(new Date(thing.createdAt))}</div>
+        </>
+      }
+
+      {/* {showDelete ? <button className={"px-2"}>delete</button> : <button></button>} */}
+      </div>
     </div>
   )
 }
