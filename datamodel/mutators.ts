@@ -28,6 +28,7 @@ import {
 import {
   putThing,
   deleteThing,
+  updateThingName,
 } from "./thing";
 
 export type M = typeof serverMutators;
@@ -52,6 +53,7 @@ export const serverMutators = {
   updateUser,
   createThing: putThing,
   deleteThing,
+  updateThingName,
   nop: async (_: WriteTransaction) => {},
 };
 

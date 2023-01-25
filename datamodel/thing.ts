@@ -35,6 +35,22 @@ export async function deleteThing(
   await tx.del(key(id));
 }
 
+export async function updateThingName(
+  tx: WriteTransaction,
+  { id, name }: { id: string; name: string }
+): Promise<void> {
+  const thing = await getThing(tx, id);
+  if (thing) {
+    await putThing(tx, {
+      id,
+      thing: {
+        ...thing,
+        name
+      }
+    });
+  }
+}
+
 function key(id: string): string {
   return `${thingPrefix}${id}`;
 }
