@@ -189,11 +189,14 @@ function ThingEdit({thing, name, reflect} : any) {
   const nameRef = useRef<any>()
   const authorRef = useRef<any>()
   const tldrRef = useRef<any>()
+  const publicationDateRef = useRef<any>()
   const [x, setX] = useState<any>(name)
   const [tldr, setTldr] = useState<any>(thing.tldr)
+  const [publicationDate, setPublicationDate] = useState<any>(thing.publicationDate)
   const [showAuthorForm, setShowAuthorForm] = useState<boolean>(false)
   const [showEditName, setShowEditName] = useState<boolean>(false)
   const [showEditTldr, setShowEditTldr] = useState<boolean>(false)
+  const [showEditPublicationDate, setShowEditPublicationDate] = useState<boolean>(false)
 
   const [arrowIDs, setArrowIDs] = useState<string[]>([])
 
@@ -232,6 +235,22 @@ function ThingEdit({thing, name, reflect} : any) {
     reflect.mutate.updateThingTldr(data)
   }
 
+  function updateThingPublicationDate(){
+    let value = thing.publicationDate
+    if (publicationDateRef && publicationDateRef.current && publicationDateRef.current.value) {
+      value = publicationDateRef.current.value
+    }
+    const data = {
+      id: thing.id,
+      publicationDate: value
+    }
+    console.log("data", data)
+    console.log({data})
+
+    setPublicationDate(value)
+    reflect.mutate.updateThingPublicationDate(data)
+  }
+
   function saveAuthor(){
     // create a new thing
     const authorThing : any = randomThing()
@@ -247,13 +266,14 @@ function ThingEdit({thing, name, reflect} : any) {
     // update new thing with new arrow
     authorThing.thing.arrows = [authorArrow.id, ...authorThing.thing.arrows]
     authorThing.thing.type = "author"
+
     // save everything
     // save arrow
     reflect.mutate.createArrow(authorArrow)
     // create new thing
     reflect.mutate.createThing(authorThing)
     // add arrow to existing thing
-    reflect.mutate.updateThingAddArrow({id: thing.id, arrow: authorArrow.id})
+    reflect.mutate.updateThingAddArrow({id: thing.id, arrow: authorArrow.id, authorArrow: authorArrow.id })
   }
 
   return (
@@ -271,6 +291,20 @@ function ThingEdit({thing, name, reflect} : any) {
           placeholder={"name"}
           value={x}
           onChange={() => updateThingName()}
+        />
+      }
+      {!showEditPublicationDate ?
+        <div
+          className={"px-4 py-2 w-full"}
+          onClick={() => setShowEditPublicationDate(!showEditPublicationDate)}
+        >{thing.publicationDate ? thing.publicationDate : 'no date'}</div>
+      :
+        <textarea
+          className={"px-4 py-2 w-full outline-none bg-zinc-100 bg-white focus:bg-zinc-100"}
+          ref={publicationDateRef}
+          placeholder={"publication date"}
+          value={publicationDate}
+          onChange={() => updateThingPublicationDate()}
         />
       }
       <div className={"px-4 py-2"}>
@@ -356,11 +390,14 @@ function Thing({thingID, index, handleSetSelectedThing, reflect, handleShowAutho
     handleSetSelectedThing({id: thingID, ...thing})
   }
 
+  console.log("beep boop" , thing?.authorArrows.length)
+
   if (!handleShowAuthors  && thing && thing.type === "author") {
     return (
       <></>
     )
   }
+
 
   return (
     <div
@@ -374,12 +411,26 @@ function Thing({thingID, index, handleSetSelectedThing, reflect, handleShowAutho
       {thing &&
         <>
           <div className={"w-full"}>{thing.name}</div>
-
           <div className={"w-24"}>{dateInWordsTimeOnly(new Date(thing.createdAt))}</div>
         </>
       }
 
       </div>
+      {isSelectedThing &&
+      <div className={"flex pt-2"}>
+        <div className={"w-24"}></div>
+        <div className={"w-full py-2 pr-20 text-zinc-500"}>
+        {thing &&
+          <ShortName
+            publicationDate={thing.publicationDate}
+            firstAuthorThingID={thing.authorArrows.length > 0 ? thing.authorArrows[0] : null}
+            reflect={reflect}
+          />
+        }
+        </div>
+        <div className={"w-24"}></div>
+      </div>
+      }
       {isSelectedThing &&
       <div className={"flex"}>
         <div className={"w-24"}></div>
@@ -388,5 +439,37 @@ function Thing({thingID, index, handleSetSelectedThing, reflect, handleShowAutho
       </div>
       }
     </div>
+  )
+}
+
+function ShortName({publicationDate, firstAuthorThingID, reflect} : any){
+  const arrow = useArrowByID(reflect, firstAuthorThingID)
+
+  return (
+    <div>
+      {arrow &&
+        <>
+          <FirstAuthorLastName
+            thingID={arrow.front}
+            reflect={reflect}
+          />
+          <span>{` et al. `}</span>
+        </>
+      }
+      {publicationDate}
+    </div>
+  )
+}
+
+function FirstAuthorLastName({thingID, reflect}:any){
+  const thing = useThingByID(reflect, thingID)
+  return (
+    <>
+      {thing &&
+      <span className={""}>{
+        thing.name.split(" ")[1]
+      }</span>
+      }
+    </>
   )
 }
