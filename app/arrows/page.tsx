@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from 'react'
 import { Reflect } from '@rocicorp/reflect'
 import { M, clientMutators } from '../../datamodel/mutators'
@@ -5,8 +6,8 @@ import Arrows from '../../components/arrows'
 import { consoleLogSink, OptionalLoggerImpl } from '@rocicorp/logger'
 import { DataDogBrowserLogSink } from '../../components/data-dog-browser-log-sink'
 import { workerWsURI } from '../../util/host'
-import { nanoid } from 'nanoid'
 import { randUserInfo } from '../../datamodel/client-state'
+
 
 export default function Home() {
   const [reflect, setReflectClient] = useState<Reflect<M> | null>(null)

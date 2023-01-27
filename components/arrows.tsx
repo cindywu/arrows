@@ -4,18 +4,25 @@ import { randomThing } from '../datamodel/thing'
 import { randomArrow } from '../datamodel/arrow'
 import { dateInWordsTimeOnly } from '../util/dateInWords'
 import Link from 'next/link'
+import { Reflect } from '@rocicorp/reflect'
+import { M } from '../datamodel/mutators'
 
-export default function Arrows({ reflect } : { reflect: any}) {
+type ArrowProps = {
+  reflect: Reflect<M>
+}
+
+export default function Arrows({ reflect } : ArrowProps ) {
   const [selectedThing, setSelectedThing] = useState<string|null>(null)
   const [showAuthors, setShowAuthors] = useState<boolean>(false)
 
-  const thingIDs = useThingIDs(reflect)
-  const arrowIDs = useArrowIDs(reflect)
+  const thingIDs : string[] = useThingIDs(reflect)
+  const arrowIDs : string[] = useArrowIDs(reflect)
 
   console.log({arrowIDs})
 
   function addThing(){
-    const thing = randomThing()
+    const thing = randomThing() // LATER
+    console.log({thing})
     reflect.mutate.createThing(thing)
   }
 
@@ -36,7 +43,6 @@ export default function Arrows({ reflect } : { reflect: any}) {
               handleSetShowAuthors={setShowAuthors}
             />
           </>
-
         }
         <Right
           thing={selectedThing || null}
@@ -66,7 +72,12 @@ function Toasts(){
     </div>
   )
 }
-function Left({count}: any){
+
+type LeftProps = {
+  count: number
+}
+
+function Left({ count }: LeftProps){
   return (
     <div className={`w-96 border-r-2 border-black h-screen`}>
       <div className={"p-8"}>
@@ -79,7 +90,16 @@ function Left({count}: any){
   )
 }
 
-function Middle({thingIDs, addThing, handleSetSelectedThing, reflect, handleShowAuthors, handleSetShowAuthors}:any){
+type MiddleProps = {
+  thingIDs: string[]
+  addThing: () => void
+  handleSetSelectedThing: (thingID: string) => void
+  reflect: Reflect<M>
+  handleShowAuthors: boolean
+  handleSetShowAuthors: (showAuthors: boolean) => void
+}
+
+function Middle({ thingIDs, addThing, handleSetSelectedThing, reflect, handleShowAuthors, handleSetShowAuthors }: MiddleProps){
   return (
     <div className={"w-full flex flex-col"}>
       <Nav
@@ -144,7 +164,13 @@ function Body({thingIDs, handleSetSelectedThing, reflect, handleShowAuthors}: an
   )
 }
 
-function Right({ thing, reflect}: any){
+type RightProps = {
+  thing: any
+  reflect: Reflect<M>
+}
+
+
+function Right({ thing, reflect}: RightProps){
   return (
     <div className={"p-4 w-128 border-l-2 border-black"}>
       {thing &&
@@ -158,7 +184,13 @@ function Right({ thing, reflect}: any){
   )
 }
 
-function ThingEdit({thing, name, reflect} : any) {
+type ThingEditProps = {
+  thing: any
+  name: string
+  reflect: Reflect<M>
+}
+
+function ThingEdit({thing, name, reflect} : ThingEditProps) {
   const nameRef = useRef<HTMLTextAreaElement>()
   const authorRef = useRef<HTMLInputElement>()
   const [x, setX] = useState<any>(name)
