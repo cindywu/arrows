@@ -5,6 +5,15 @@ import { randomArrow } from '../datamodel/arrow'
 import { dateInWordsTimeOnly } from '../util/dateInWords'
 import Link from 'next/link'
 
+//   name: z.string(),
+//   createdAt: z.string(),
+//   arrows: z.array(z.string()),
+//   type: z.string(),
+//   fileIDs: z.array(z.string()),
+//   publicationDate: z.string(),
+//   authorArrows: z.array(z.string()),
+//   tldr: z.string()
+
 export default function Arrows({ reflect } : { reflect: any}) {
   const [selectedThing, setSelectedThing] = useState<string|null>(null)
   const [showAuthors, setShowAuthors] = useState<boolean>(false)
@@ -35,6 +44,7 @@ export default function Arrows({ reflect } : { reflect: any}) {
               thingIDs={thingIDs}
               addThing={addThing}
               handleSetSelectedThing={setSelectedThing}
+              selectedThing={selectedThing}
               reflect={reflect}
               handleShowAuthors={showAuthors}
               handleSetShowAuthors={setShowAuthors}
@@ -86,7 +96,7 @@ function Left({count}: any){
   )
 }
 
-function Middle({thingIDs, addThing, handleSetSelectedThing, reflect, handleShowAuthors, handleSetShowAuthors}:any){
+function Middle({thingIDs, addThing, handleSetSelectedThing, reflect, handleShowAuthors, handleSetShowAuthors, selectedThing}:any){
   return (
     <div className={"w-full flex flex-col"}>
       <Nav
@@ -99,6 +109,7 @@ function Middle({thingIDs, addThing, handleSetSelectedThing, reflect, handleShow
         handleSetSelectedThing={handleSetSelectedThing}
         reflect={reflect}
         handleShowAuthors={handleShowAuthors}
+        selectedThing={selectedThing}
       />
     </div>
   )
@@ -134,10 +145,10 @@ function AddButton({addThing}: any){
   )
 }
 
-function Body({thingIDs, handleSetSelectedThing, reflect, handleShowAuthors}: any){
+function Body({thingIDs, handleSetSelectedThing, reflect, handleShowAuthors, selectedThing}: any){
   return (
     <div className={"overflow-auto"}>
-      {thingIDs && thingIDs.map((thingID: any, index: any) =>
+      {thingIDs.length > 0 ? thingIDs.map((thingID: any, index: any) =>
         <Thing
           key={thingID}
           thingID={thingID}
@@ -145,8 +156,16 @@ function Body({thingIDs, handleSetSelectedThing, reflect, handleShowAuthors}: an
           handleSetSelectedThing={handleSetSelectedThing}
           reflect={reflect}
           handleShowAuthors={handleShowAuthors}
+          isSelectedThing= {selectedThing ? selectedThing.id === thingID : false}
         />
-      )}
+      )
+      :
+      <div
+        className={"flex justify-center w-full pt-40"}
+        onClick={() => reflect.mutate.createThing(randomThing())}
+      >
+        <button>what's on your mind?</button>
+      </div>}
     </div>
   )
 }
@@ -166,11 +185,15 @@ function Right({ thing, reflect}: any){
 }
 
 function ThingEdit({thing, name, reflect} : any) {
+  console.log({thing})
   const nameRef = useRef<any>()
   const authorRef = useRef<any>()
+  const tldrRef = useRef<any>()
   const [x, setX] = useState<any>(name)
+  const [tldr, setTldr] = useState<any>(thing.tldr)
   const [showAuthorForm, setShowAuthorForm] = useState<boolean>(false)
   const [showEditName, setShowEditName] = useState<boolean>(false)
+  const [showEditTldr, setShowEditTldr] = useState<boolean>(false)
 
   const [arrowIDs, setArrowIDs] = useState<string[]>([])
 
@@ -193,6 +216,20 @@ function ThingEdit({thing, name, reflect} : any) {
     }
     setX(value)
     reflect.mutate.updateThingName(data)
+  }
+
+  function updateThingTldr(){
+    let value = thing.tldr
+    if (tldrRef && tldrRef.current && tldrRef.current.value) {
+      value = tldrRef.current.value
+    }
+    const data = {
+      id: thing.id,
+      tldr: value
+    }
+    console.log({data})
+    setTldr(value)
+    reflect.mutate.updateThingTldr(data)
   }
 
   function saveAuthor(){
@@ -236,8 +273,6 @@ function ThingEdit({thing, name, reflect} : any) {
           onChange={() => updateThingName()}
         />
       }
-
-
       <div className={"px-4 py-2"}>
         <div className={"py-2"}>
           {arrowIDs && arrowIDs.map((arrowID: any) => {
@@ -266,6 +301,21 @@ function ThingEdit({thing, name, reflect} : any) {
           <button className={"py-2"} onClick={() => setShowAuthorForm(!showAuthorForm)}>Add author</button>
         }
       </div>
+      {!showEditTldr ?
+        <div
+          className={"px-4 py-2 w-full"}
+          onClick={() => setShowEditTldr(!showEditTldr)}
+        >{thing.tldr ? thing.tldr : "empty"}</div>
+      :
+        <textarea
+          className={"px-4 py-2 w-full outline-none bg-zinc-100 bg-white focus:bg-zinc-100"}
+          ref={tldrRef}
+          placeholder={"tldr"}
+          value={tldr}
+          onChange={() => updateThingTldr()}
+        />
+      }
+
       <div
         className={"px-4 py-2"}
         onClick={() => reflect.mutate.deleteThing(thing.id)}
@@ -297,7 +347,7 @@ function Author({reflect, thingID}: any) {
 }
 
 
-function Thing({thingID, index, handleSetSelectedThing, reflect, handleShowAuthors}: any){
+function Thing({thingID, index, handleSetSelectedThing, reflect, handleShowAuthors, isSelectedThing}: any){
   const [showDelete, setShowDelete] = useState(false)
 
   const thing = useThingByID(reflect, thingID)
@@ -324,10 +374,19 @@ function Thing({thingID, index, handleSetSelectedThing, reflect, handleShowAutho
       {thing &&
         <>
           <div className={"w-full"}>{thing.name}</div>
+
           <div className={"w-24"}>{dateInWordsTimeOnly(new Date(thing.createdAt))}</div>
         </>
       }
+
       </div>
+      {isSelectedThing &&
+      <div className={"flex"}>
+        <div className={"w-24"}></div>
+        <div className={"w-full py-2 pr-20 text-zinc-500"}>{thing && thing.tldr}</div>
+        <div className={"w-24"}>  </div>
+      </div>
+      }
     </div>
   )
 }
