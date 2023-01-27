@@ -7,6 +7,10 @@ export const thingSchema = z.object({
   createdAt: z.string(),
   arrows: z.array(z.string()),
   type: z.string(),
+  fileIDs: z.array(z.string()),
+  publicationDate: z.string(),
+  authorArrows: z.array(z.string()),
+  tldr: z.string()
 });
 
 export type Thing = z.infer<typeof thingSchema>;
@@ -53,6 +57,25 @@ export async function updateThingName(
   }
 }
 
+export async function updateThingTldr(
+  tx: WriteTransaction,
+  { id, tldr }: { id: string; tldr: string }
+): Promise<void> {
+  console.log({id}, {tldr})
+  const thing = await getThing(tx, id);
+  console.log('i am in here!!!')
+  if (thing) {
+    console.log('i am in here!!!', {thing})
+    await putThing(tx, {
+      id,
+      thing: {
+        ...thing,
+        tldr: tldr
+      }
+    });
+  }
+}
+
 export async function updateThingAddArrow(
   tx: WriteTransaction,
   { id, arrow }: { id: string; arrow: string }
@@ -83,6 +106,10 @@ export function randomThing() {
       createdAt: new Date().toISOString(),
       arrows: [],
       type: "",
+      fileIDs: [],
+      publicationDate: "",
+      authorArrows: [],
+      tldr: "",
     } as Thing,
   };
 }
