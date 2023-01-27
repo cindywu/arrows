@@ -8,11 +8,15 @@ import Link from 'next/link'
 export default function Arrows({ reflect } : { reflect: any}) {
   const [selectedThing, setSelectedThing] = useState<string|null>(null)
   const [showAuthors, setShowAuthors] = useState<boolean>(false)
+  const [showSelectedThing, setShowSelectedThing] = useState<boolean>(false)
+
 
   const thingIDs = useThingIDs(reflect)
   const arrowIDs = useArrowIDs(reflect)
 
-  console.log({arrowIDs})
+  useEffect(() => {
+    setShowSelectedThing(true)
+  }, [selectedThing])
 
   function addThing(){
     const thing = randomThing()
@@ -36,12 +40,14 @@ export default function Arrows({ reflect } : { reflect: any}) {
               handleSetShowAuthors={setShowAuthors}
             />
           </>
-
         }
-        <Right
-          thing={selectedThing || null}
-          reflect={reflect}
-        />
+        {showSelectedThing &&
+            <Right
+            thing={selectedThing || null}
+            reflect={reflect}
+          />
+        }
+
       </div>
       {/* <Toasts/> */}
     </div>
@@ -66,6 +72,7 @@ function Toasts(){
     </div>
   )
 }
+
 function Left({count}: any){
   return (
     <div className={`w-96 border-r-2 border-black h-screen`}>
@@ -159,14 +166,13 @@ function Right({ thing, reflect}: any){
 }
 
 function ThingEdit({thing, name, reflect} : any) {
-  const nameRef = useRef<HTMLTextAreaElement>()
-  const authorRef = useRef<HTMLInputElement>()
+  const nameRef = useRef<any>()
+  const authorRef = useRef<any>()
   const [x, setX] = useState<any>(name)
   const [showAuthorForm, setShowAuthorForm] = useState<boolean>(false)
+  const [showEditName, setShowEditName] = useState<boolean>(false)
 
   const [arrowIDs, setArrowIDs] = useState<string[]>([])
-
-  console.log({thing})
 
   useEffect(() => {
     setX(name)
@@ -192,7 +198,7 @@ function ThingEdit({thing, name, reflect} : any) {
   function saveAuthor(){
     // create a new thing
     const authorThing : any = randomThing()
-    authorThing.thing.name = authorRef.current.value
+    authorThing.thing.name = authorRef && authorRef.current && authorRef.current.value
 
     // create a new arrow
     const authorArrow : {id: string, arrow: {back: string, front: string, createdAt: string}}= randomArrow()
@@ -216,13 +222,22 @@ function ThingEdit({thing, name, reflect} : any) {
   return (
     <div>
       <div className={"font-mono p-4 text-zinc-400"}>{thing.id}</div>
-      <textarea
-        className={"px-4 py-2 w-full outline-none bg-zinc-100 bg-white focus:bg-zinc-100"}
-        ref={nameRef}
-        placeholder={"name"}
-        value={x}
-        onChange={() => updateThingName()}
-      />
+      {!showEditName ?
+        <div
+          className={"px-4 py-2 w-full"}
+          onClick={() => setShowEditName(!showEditName)}
+        >{thing.name}</div>
+      :
+        <textarea
+          className={"px-4 py-2 w-full outline-none bg-zinc-100 bg-white focus:bg-zinc-100"}
+          ref={nameRef}
+          placeholder={"name"}
+          value={x}
+          onChange={() => updateThingName()}
+        />
+      }
+
+
       <div className={"px-4 py-2"}>
         <div className={"py-2"}>
           {arrowIDs && arrowIDs.map((arrowID: any) => {
@@ -292,7 +307,9 @@ function Thing({thingID, index, handleSetSelectedThing, reflect, handleShowAutho
   }
 
   if (!handleShowAuthors  && thing && thing.type === "author") {
-    return
+    return (
+      <></>
+    )
   }
 
   return (
