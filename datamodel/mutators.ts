@@ -31,6 +31,7 @@ import {
   updateThingName,
   updateThingAddArrow,
   updateThingTldr,
+  updateThingPublicationDate,
 } from "./thing";
 
 import {
@@ -65,6 +66,7 @@ export const serverMutators = {
   deleteArrow,
   updateThingAddArrow,
   updateThingTldr,
+  updateThingPublicationDate,
   nop: async (_: WriteTransaction) => {},
 };
 

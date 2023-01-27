@@ -76,9 +76,9 @@ export async function updateThingTldr(
   }
 }
 
-export async function updateThingAddArrow(
+export async function updateThingPublicationDate(
   tx: WriteTransaction,
-  { id, arrow }: { id: string; arrow: string }
+  { id, publicationDate }: { id: string; publicationDate: string }
 ): Promise<void> {
   const thing = await getThing(tx, id);
   if (thing) {
@@ -86,7 +86,26 @@ export async function updateThingAddArrow(
       id,
       thing: {
         ...thing,
-        arrows: [...thing.arrows, arrow]
+        publicationDate
+      }
+    });
+  }
+}
+
+
+
+export async function updateThingAddArrow(
+  tx: WriteTransaction,
+  { id, arrow, authorArrow }: { id: string; arrow: string, authorArrow: string }
+): Promise<void> {
+  const thing = await getThing(tx, id);
+  if (thing) {
+    await putThing(tx, {
+      id,
+      thing: {
+        ...thing,
+        arrows: [...thing.arrows, arrow],
+        authorArrows: [...thing.authorArrows, authorArrow]
       }
     })
   }
