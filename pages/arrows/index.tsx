@@ -7,6 +7,7 @@ import { DataDogBrowserLogSink } from '../../components/data-dog-browser-log-sin
 import { workerWsURI } from '../../util/host'
 import { nanoid } from 'nanoid'
 import { randUserInfo } from '../../datamodel/client-state'
+import Battleship from '../../components/battleship'
 
 export default function Home() {
   const [reflect, setReflectClient] = useState<Reflect<M> | null>(null)
@@ -55,7 +56,10 @@ export default function Home() {
   }
 
   return (
-    <Arrows
+    // <Arrows
+    //   reflect={reflect}
+    // />
+    <Battleship
       reflect={reflect}
     />
   )

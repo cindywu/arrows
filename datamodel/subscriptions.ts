@@ -6,6 +6,7 @@ import { getItem, itemPrefix } from "./item";
 import { getUser, userPrefix } from "./user";
 import { getThing, thingPrefix } from "./thing";
 import { getArrow, arrowPrefix } from "./arrow";
+import { getGame, gamePrefix} from "./game";
 import type { M } from "./mutators";
 
 export function useArrowIDs(reflect: Reflect<M>) {
@@ -27,6 +28,30 @@ export function useArrowByID(reflect: Reflect<M>, id: string) {
     reflect,
     async (tx) => {
       return await getArrow(tx, id);
+    },
+    null
+  );
+}
+
+export function useGameIDs(reflect: Reflect<M>) {
+  return useSubscribe(
+    reflect,
+    async (tx) => {
+      const games = (await tx
+        .scan({ prefix: gamePrefix})
+        .keys()
+        .toArray()) as string[];
+      return games.map((k) => k.substring(gamePrefix.length));
+    },
+    []
+  );
+}
+
+export function useGameByID(reflect: Reflect<M>, id: string) {
+  return useSubscribe(
+    reflect,
+    async (tx) => {
+      return await getGame(tx, id);
     },
     null
   );

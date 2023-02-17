@@ -39,6 +39,11 @@ import {
   deleteArrow,
 } from "./arrow";
 
+import {
+  putGame,
+  updateGamePlay1,
+} from "./game";
+
 export type M = typeof serverMutators;
 
 export const serverMutators = {
@@ -67,6 +72,8 @@ export const serverMutators = {
   updateThingAddArrow,
   updateThingTldr,
   updateThingPublicationDate,
+  createGame: putGame,
+  updateGame: updateGamePlay1,
   nop: async (_: WriteTransaction) => {},
 };
 
